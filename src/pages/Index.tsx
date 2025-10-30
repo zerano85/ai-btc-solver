@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { cryptoPuzzles, CryptoPuzzle } from "@/lib/cryptoPuzzles";
 import { solvePuzzleWithAI, estimateSolveTime } from "@/lib/aiSolver";
 
+// Constants
+const INITIALLY_SOLVED_PUZZLE_COUNT = 3; // First 3 puzzles are pre-solved
+
 interface PuzzleState extends CryptoPuzzle {
   status: "solved" | "unsolved" | "solving";
   foundSolution?: string;
@@ -15,8 +18,8 @@ const Index = () => {
   const [puzzles, setPuzzles] = useState<PuzzleState[]>(
     cryptoPuzzles.map(p => ({
       ...p,
-      status: (p.id <= 3 ? "solved" : "unsolved") as "solved" | "unsolved" | "solving",
-      foundSolution: p.id <= 3 ? p.solution : undefined
+      status: (p.id <= INITIALLY_SOLVED_PUZZLE_COUNT ? "solved" : "unsolved") as "solved" | "unsolved" | "solving",
+      foundSolution: p.id <= INITIALLY_SOLVED_PUZZLE_COUNT ? p.solution : undefined
     }))
   );
 

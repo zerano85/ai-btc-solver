@@ -5,6 +5,10 @@
 
 import { CryptoPuzzle, PuzzleType } from './cryptoPuzzles';
 
+// Constants
+const PRINTABLE_ASCII_REGEX = /^[\x20-\x7E]+$/; // Matches printable ASCII characters (space to tilde)
+const SIMULATION_SUCCESS_RATE = 0.7; // Success rate multiplier for brute force simulation
+
 export interface SolverResult {
   success: boolean;
   solution?: string;
@@ -32,7 +36,7 @@ function hexToAscii(hex: string): string {
     const cleanHex = hex.replace(/\s/g, '');
     let result = '';
     for (let i = 0; i < cleanHex.length; i += 2) {
-      result += String.fromCharCode(parseInt(cleanHex.substr(i, 2), 16));
+      result += String.fromCharCode(parseInt(cleanHex.substring(i, i + 2), 16));
     }
     return result;
   } catch {
@@ -155,7 +159,7 @@ function solveCipherPuzzle(puzzle: CryptoPuzzle): SolverResult {
     attempts++;
     try {
       const result = decoder.fn();
-      if (result && result.length > 0 && /^[\x20-\x7E]+$/.test(result)) {
+      if (result && result.length > 0 && PRINTABLE_ASCII_REGEX.test(result)) {
         solution = result;
         method = decoder.name;
         break;
@@ -268,7 +272,7 @@ function solveBitcoinPuzzle(puzzle: CryptoPuzzle): SolverResult {
   }
 
   // For smaller puzzles, simulate finding the solution
-  const attempts = Math.floor(Math.random() * maxAttempts * 0.7) + 1;
+  const attempts = Math.floor(Math.random() * maxAttempts * SIMULATION_SUCCESS_RATE) + 1;
   
   return {
     success: bits <= 15, // Simulate success for easier puzzles

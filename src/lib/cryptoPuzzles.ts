@@ -302,9 +302,9 @@ export const cryptoPuzzles: CryptoPuzzle[] = [
     name: "Puzzle #66 - Real Bitcoin Challenge",
     description: "Part of the famous Bitcoin puzzle transaction",
     difficulty: "impossible",
-    challenge: "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so",
+    challenge: "1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9",
     bits: 66,
-    address: "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so",
+    address: "1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9",
     balance: "6.6",
     solutionMethod: "Beyond current computational feasibility",
     hint: "Requires breakthrough in quantum computing or algorithms"
