@@ -26,24 +26,24 @@ export const SolverPanel = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-secondary" />
-            <CardTitle className="text-lg">KI Solver Status</CardTitle>
+            <CardTitle className="text-lg">AI Solver Status</CardTitle>
           </div>
           <Badge variant={isRunning ? "active" : "info"}>
-            {isRunning ? "Aktiv" : "Bereit"}
+            {isRunning ? "Active" : "Ready"}
           </Badge>
         </div>
-        <CardDescription>Systematische Brute-Force Analyse</CardDescription>
+        <CardDescription>Systematic Brute-Force Analysis</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Aktuelles Puzzle</p>
+            <p className="text-xs text-muted-foreground">Current Puzzle</p>
             <p className="text-2xl font-bold font-mono text-primary">
               {currentPuzzle ? `#${currentPuzzle}` : "—"}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Versuche/Sek</p>
+            <p className="text-xs text-muted-foreground">Attempts/Sec</p>
             <p className="text-2xl font-bold font-mono text-secondary">
               {attemptsPerSecond.toLocaleString()}
             </p>
@@ -51,7 +51,7 @@ export const SolverPanel = ({
         </div>
         
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Gesamtversuche</p>
+          <p className="text-xs text-muted-foreground">Total Attempts</p>
           <p className="text-lg font-mono font-semibold">{totalAttempts.toLocaleString()}</p>
         </div>
 
@@ -70,12 +70,12 @@ export const SolverPanel = ({
             {isRunning ? (
               <>
                 <Pause className="w-4 h-4" />
-                Stoppen
+                Stop
               </>
             ) : (
               <>
                 <Play className="w-4 h-4" />
-                Starten
+                Start
               </>
             )}
           </Button>
