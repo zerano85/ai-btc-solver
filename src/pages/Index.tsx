@@ -3,31 +3,25 @@ import { PuzzleCard } from "@/components/PuzzleCard";
 import { SolverPanel } from "@/components/SolverPanel";
 import { Bitcoin } from "lucide-react";
 import { toast } from "sonner";
+import { cryptoPuzzles, CryptoPuzzle } from "@/lib/cryptoPuzzles";
+import { solvePuzzleWithAI, estimateSolveTime } from "@/lib/aiSolver";
 
-interface Puzzle {
-  number: number;
-  bits: number;
-  address: string;
-  balance: string;
+// Constants
+const INITIALLY_SOLVED_PUZZLE_COUNT = 3; // First 3 puzzles are pre-solved
+
+interface PuzzleState extends CryptoPuzzle {
   status: "solved" | "unsolved" | "solving";
-  difficulty: "easy" | "medium" | "hard" | "impossible";
+  foundSolution?: string;
 }
 
 const Index = () => {
-  const [puzzles, setPuzzles] = useState<Puzzle[]>([
-    { number: 1, bits: 1, address: "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", balance: "0.001", status: "solved", difficulty: "easy" },
-    { number: 2, bits: 2, address: "1CUNEBjYrCn2y1SdiUMohaKUi4wpP326Lb", balance: "0.002", status: "solved", difficulty: "easy" },
-    { number: 3, bits: 3, address: "19ZewH8Kk1PDbSNdJ97FP4EiCjTRaZMZQA", balance: "0.003", status: "solved", difficulty: "easy" },
-    { number: 4, bits: 4, address: "1EhqbyUMvvs7BfL8goY6qcPbD6YKfPqb7e", balance: "0.004", status: "solved", difficulty: "easy" },
-    { number: 5, bits: 5, address: "1E6NuFjCi27W5zoXg8TRdcSRq84zJeBW3k", balance: "0.005", status: "solved", difficulty: "easy" },
-    { number: 10, bits: 10, address: "16JrGhLx5bcBSA34kew9V6Mufa4aXhFe9X", balance: "0.01", status: "solved", difficulty: "easy" },
-    { number: 15, bits: 15, address: "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so", balance: "0.015", status: "unsolved", difficulty: "medium" },
-    { number: 20, bits: 20, address: "1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9", balance: "0.02", status: "unsolved", difficulty: "medium" },
-    { number: 25, bits: 25, address: "1MVDYgVaSN6iKKEsbzRUAYFrYJadLYZvvZ", balance: "0.025", status: "unsolved", difficulty: "medium" },
-    { number: 30, bits: 30, address: "19vkiEajfhuZ8bs8Zu2jgmC6oqZbWqhxhG", balance: "0.03", status: "unsolved", difficulty: "hard" },
-    { number: 40, bits: 40, address: "1GAHNE1x1AfSJwJY1ZnJgC7JfsKxk9hLy", balance: "0.04", status: "unsolved", difficulty: "hard" },
-    { number: 50, bits: 50, address: "14oFNXucftsHiUMY8uctg6N487riuyXs4h", balance: "0.05", status: "unsolved", difficulty: "impossible" },
-  ]);
+  const [puzzles, setPuzzles] = useState<PuzzleState[]>(
+    cryptoPuzzles.map(p => ({
+      ...p,
+      status: (p.id <= INITIALLY_SOLVED_PUZZLE_COUNT ? "solved" : "unsolved") as "solved" | "unsolved" | "solving",
+      foundSolution: p.id <= INITIALLY_SOLVED_PUZZLE_COUNT ? p.solution : undefined
+    }))
+  );
 
   const [solverRunning, setSolverRunning] = useState(false);
   const [currentSolvingPuzzle, setCurrentSolvingPuzzle] = useState<number | undefined>();
@@ -46,55 +40,66 @@ const Index = () => {
     }
   }, [solverRunning]);
 
-  const handleSolvePuzzle = (puzzleNumber: number) => {
-    const puzzle = puzzles.find((p) => p.number === puzzleNumber);
+  const handleSolvePuzzle = async (puzzleId: number) => {
+    const puzzle = puzzles.find((p) => p.id === puzzleId);
     if (!puzzle) return;
 
     if (puzzle.difficulty === "impossible") {
-      toast.error("Dieses Puzzle ist mit aktuellen Methoden praktisch unlösbar!");
+      toast.error("This puzzle is computationally infeasible with current methods!", {
+        description: `Estimated time: ${estimateSolveTime(puzzle)}`
+      });
       return;
     }
 
     setPuzzles((prev) =>
       prev.map((p) =>
-        p.number === puzzleNumber ? { ...p, status: "solving" as const } : p
+        p.id === puzzleId ? { ...p, status: "solving" as const } : p
       )
     );
     
-    setCurrentSolvingPuzzle(puzzleNumber);
+    setCurrentSolvingPuzzle(puzzleId);
     setSolverRunning(true);
     
-    toast.success(`KI Solver gestartet für Puzzle #${puzzleNumber}`, {
-      description: `Schwierigkeit: ${puzzle.difficulty}`,
+    toast.success(`AI Solver started for ${puzzle.name}`, {
+      description: `Type: ${puzzle.type} | Difficulty: ${puzzle.difficulty}`,
     });
 
-    // Simuliere Lösungsversuch (in Realität würde dies sehr lange dauern)
-    setTimeout(() => {
-      const success = Math.random() > 0.7; // 30% Erfolgsrate für Demo
+    try {
+      // Use AI solver
+      const result = await solvePuzzleWithAI(puzzle);
       
-      if (success) {
+      if (result.success && result.solution) {
         setPuzzles((prev) =>
           prev.map((p) =>
-            p.number === puzzleNumber ? { ...p, status: "solved" as const } : p
+            p.id === puzzleId ? { ...p, status: "solved" as const, foundSolution: result.solution } : p
           )
         );
-        toast.success(`🎉 Puzzle #${puzzleNumber} gelöst!`, {
-          description: `Private Key gefunden nach ${totalAttempts.toLocaleString()} Versuchen!`,
+        toast.success(`🎉 Puzzle #${puzzleId} solved!`, {
+          description: `Solution: ${result.solution} | Method: ${result.method} | Attempts: ${result.attempts.toLocaleString()}`,
         });
       } else {
         setPuzzles((prev) =>
           prev.map((p) =>
-            p.number === puzzleNumber ? { ...p, status: "unsolved" as const } : p
+            p.id === puzzleId ? { ...p, status: "unsolved" as const } : p
           )
         );
-        toast.error(`Puzzle #${puzzleNumber} konnte nicht gelöst werden`, {
-          description: "Erhöhe die Rechenleistung oder versuche ein einfacheres Puzzle",
+        toast.error(`Puzzle #${puzzleId} could not be solved`, {
+          description: `Method tried: ${result.method} | Attempts: ${result.attempts.toLocaleString()}`,
         });
       }
-      
+    } catch (error) {
+      setPuzzles((prev) =>
+        prev.map((p) =>
+          p.id === puzzleId ? { ...p, status: "unsolved" as const } : p
+        )
+      );
+      toast.error(`Error solving puzzle #${puzzleId}`, {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
       setSolverRunning(false);
       setCurrentSolvingPuzzle(undefined);
-    }, 8000);
+    }
   };
 
   const handleToggleSolver = () => {
@@ -108,16 +113,16 @@ const Index = () => {
         )
       );
       
-      toast.info("Solver gestoppt");
+      toast.info("Solver stopped");
     } else {
       const firstUnsolved = puzzles.find(
         (p) => p.status === "unsolved" && p.difficulty !== "impossible"
       );
       
       if (firstUnsolved) {
-        handleSolvePuzzle(firstUnsolved.number);
+        handleSolvePuzzle(firstUnsolved.id);
       } else {
-        toast.error("Keine lösbaren Puzzles verfügbar!");
+        toast.error("No solvable puzzles available!");
       }
     }
   };
@@ -125,7 +130,7 @@ const Index = () => {
   const handleResetSolver = () => {
     setTotalAttempts(0);
     setAttemptsPerSecond(0);
-    toast.info("Solver zurückgesetzt");
+    toast.info("Solver reset");
   };
 
   return (
@@ -140,7 +145,7 @@ const Index = () => {
                 Bitcoin Puzzle Solver
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                KI-gestützte systematische Lösung der Bitcoin-Puzzles
+                AI-powered systematic solution of cryptographic puzzles
               </p>
             </div>
           </div>
@@ -165,23 +170,18 @@ const Index = () => {
           {/* Puzzle Grid */}
           <div className="lg:col-span-2">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold">Puzzle Übersicht</h2>
+              <h2 className="text-xl font-semibold">Puzzle Overview</h2>
               <p className="text-sm text-muted-foreground">
-                {puzzles.filter((p) => p.status === "solved").length} von {puzzles.length} Puzzles gelöst
+                {puzzles.filter((p) => p.status === "solved").length} of {puzzles.length} puzzles solved
               </p>
             </div>
             
             <div className="grid md:grid-cols-2 gap-4">
               {puzzles.map((puzzle) => (
                 <PuzzleCard
-                  key={puzzle.number}
-                  puzzleNumber={puzzle.number}
-                  bits={puzzle.bits}
-                  address={puzzle.address}
-                  balance={puzzle.balance}
-                  status={puzzle.status}
-                  difficulty={puzzle.difficulty}
-                  onSolve={() => handleSolvePuzzle(puzzle.number)}
+                  key={puzzle.id}
+                  puzzle={puzzle}
+                  onSolve={() => handleSolvePuzzle(puzzle.id)}
                 />
               ))}
             </div>
