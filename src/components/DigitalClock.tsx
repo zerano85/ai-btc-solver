@@ -41,11 +41,29 @@ export const DigitalClock = () => {
   const [selectedTimeZone, setSelectedTimeZone] = useState<string>("");
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    // Update immediately
+    setCurrentTime(new Date());
 
-    return () => clearInterval(timer);
+    // Calculate time until next second
+    const now = new Date();
+    const msUntilNextSecond = 1000 - now.getMilliseconds();
+
+    let timer: NodeJS.Timeout;
+
+    // Set timeout to align with the start of the next second
+    const alignmentTimeout = setTimeout(() => {
+      setCurrentTime(new Date());
+
+      // Now set up the interval for subsequent seconds
+      timer = setInterval(() => {
+        setCurrentTime(new Date());
+      }, 1000);
+    }, msUntilNextSecond);
+
+    return () => {
+      clearTimeout(alignmentTimeout);
+      if (timer) clearInterval(timer);
+    };
   }, []);
 
   const formatTime = (date: Date, timeZone: string) => {
@@ -88,7 +106,7 @@ export const DigitalClock = () => {
     }
 
     const newClock: ClockDisplay = {
-      id: `clock-${Date.now()}`,
+      id: `clock-${crypto.randomUUID()}`,
       timeZone: selectedTimeZone,
       label: timezone.label,
     };
