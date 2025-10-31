@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PuzzleCard } from "@/components/PuzzleCard";
 import { SolverPanel } from "@/components/SolverPanel";
+import { DigitalClock } from "@/components/DigitalClock";
 import { Bitcoin } from "lucide-react";
 import { toast } from "sonner";
 import { cryptoPuzzles, CryptoPuzzle } from "@/lib/cryptoPuzzles";
@@ -155,8 +156,8 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Solver Panel */}
-          <div className="lg:col-span-1">
+          {/* Solver Panel and Digital Clock */}
+          <div className="lg:col-span-1 space-y-6">
             <SolverPanel
               isRunning={solverRunning}
               currentPuzzle={currentSolvingPuzzle}
@@ -165,6 +166,7 @@ const Index = () => {
               onToggle={handleToggleSolver}
               onReset={handleResetSolver}
             />
+            <DigitalClock />
           </div>
 
           {/* Puzzle Grid */}
